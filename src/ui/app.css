@@ -1,0 +1,158 @@
+/**
+ * The document and its margin, and why they stay level.
+ *
+ * A textarea and an overlay only line up if every line occupies exactly one line box in
+ * both. So the textarea is `white-space: pre` with horizontal scroll rather than wrapping,
+ * and both layers share one font, one size and one line height through the same custom
+ * properties. Alignment is a CSS property here rather than measurement code, because
+ * measurement code drifts the moment anything about the font changes and the drift is
+ * invisible until somebody's answer is next to the wrong line.
+ */
+
+:root {
+  --editor-line: 1.7;
+  --editor-size: 15px;
+  --gutter: 3.5rem;
+  --answers: 15rem;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+}
+
+.page {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+/* --- the bar ------------------------------------------------------------------------- */
+
+.bar {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.9rem 1.25rem;
+  border-bottom: 1px solid var(--edge);
+}
+
+.bar h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.bar .hint {
+  margin-left: auto;
+  color: var(--dim);
+  font-size: 0.8rem;
+}
+
+/* --- the sheet ----------------------------------------------------------------------- */
+
+.sheet {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--gutter) 1fr var(--answers);
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Every layer that has to line up takes its metrics from here and nowhere else. */
+.lines, .editor, .answers {
+  font-family: var(--font-mono, ui-monospace, "SF Mono", Menlo, Consolas, monospace);
+  font-size: var(--editor-size);
+  line-height: var(--editor-line);
+  padding-block: 1rem;
+  margin: 0;
+}
+
+.lines {
+  text-align: right;
+  padding-inline: 0 0.75rem;
+  color: var(--dim);
+  opacity: 0.55;
+  user-select: none;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+}
+
+.lines div { white-space: pre; }
+
+.editor {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  resize: none;
+  background: none;
+  color: inherit;
+  padding-inline: 0.25rem 1rem;
+  /* Not `pre-wrap`. A wrapped line takes two line boxes in the textarea and one in the
+     margin, and from that point down every answer is beside the wrong line. */
+  white-space: pre;
+  overflow: auto;
+  tab-size: 4;
+  caret-color: var(--accent);
+}
+
+.editor::placeholder { color: var(--dim); opacity: 0.6; }
+
+.answers {
+  padding-inline: 1rem 1.25rem;
+  border-left: 1px solid var(--edge);
+  overflow: hidden;
+  /* Answers are figures that change as you type, and proportional digits make them jitter
+     sideways with every keystroke. */
+  font-variant-numeric: tabular-nums;
+}
+
+.answer {
+  white-space: pre;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--fg);
+}
+
+.answer.blank { color: transparent; }
+
+/* An answer that is a reason rather than a figure. Deliberately not red: a line that is
+   still being typed is briefly incomplete, and a document that flashes red at every
+   keystroke trains you to stop reading it. */
+.answer.said {
+  color: var(--dim);
+  font-style: italic;
+}
+
+.answer.name { color: var(--accent-2, var(--accent)); }
+
+/* The window a total covers, shown while the pointer is on it, because an aggregate whose
+   inputs are invisible is a number you cannot check. */
+.answer.total { color: var(--accent); cursor: default; }
+.row-lit { background: color-mix(in oklab, var(--accent) 12%, transparent); }
+
+/* --- the foot ------------------------------------------------------------------------ */
+
+.foot {
+  display: flex;
+  gap: 1rem;
+  align-items: baseline;
+  padding: 0.6rem 1.25rem;
+  border-top: 1px solid var(--edge);
+  color: var(--dim);
+  font-size: 0.78rem;
+}
+
+.foot .spacer { margin-left: auto; }
+
+@media (max-width: 42rem) {
+  :root { --answers: 9rem; --gutter: 2.25rem; }
+}
