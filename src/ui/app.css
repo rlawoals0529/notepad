@@ -33,6 +33,11 @@ body {
   grid-template-rows: auto 1fr auto;
 }
 
+/* Embedded in the desktop overlay, which supplies the bar and the hint itself. The sheet is
+   then the whole page rather than the middle of three rows. */
+.page.embed { grid-template-rows: 1fr; }
+.page.embed .sheet { border-top: 0; }
+
 /* --- the bar ------------------------------------------------------------------------- */
 
 .bar {
