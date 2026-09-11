@@ -28,7 +28,7 @@ multiplying and dividing: `100 km/h`, `2 m^2`, `240 km / 90 km/h`. Percentages, 
 `120 + 10%` is 132 rather than 130. Money, as a total rather than as a conversion. Dates,
 which move by whole days and by clamped months.
 
-## Four decisions worth knowing about before you use it
+## Design decisions
 
 **A wrong number is the worst thing this could produce**, so it never produces one. Every
 failure is a value rather than an exception: a line that cannot be worked out shows a short
@@ -55,7 +55,7 @@ Any rate this shipped would be our own stale number wearing a timestamp, and tha
 than saying it does not know. Timezones go the other way for the same reason: the browser
 ships a database its vendor patches, and it ships no rates.
 
-## Two things it gets wrong, written down rather than hidden
+## Known limitations
 
 `Call Bob at 5` is treated as arithmetic, because the rule for telling prose from a mistake
 is "no number, no `=` and no known name". `Milk and eggs` is silent and `3 kg +` is not, and
