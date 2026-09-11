@@ -21,6 +21,22 @@ leaving + 3 weeks         Sat 3 Oct 2026
 
 Blank lines and sentences produce nothing. Names carry forward. Nothing leaves the page.
 
+## Running it
+
+```bash
+npm install
+npm run dev
+npm test          # 240 unit tests
+npm run e2e       # 6, and they check the one thing only a browser can
+npm run build
+```
+
+React and nothing else at runtime, enforced by `scripts/check-deps.mjs` in CI. The units
+table, the parser and the timezone resolver are hand written, and each of those decisions
+has its argument in the file that implements it.
+
+MIT © James Kim
+
 ## What it knows
 
 Units of length, mass, time, data and angle, and anything you can build out of them by
@@ -65,19 +81,3 @@ that is the trade: this fails cosmetically rather than numerically.
 operand, which is what makes `240 km / 90 km/h` come out as hours; the same rule makes this
 one a rate. They are the same shape and want opposite groupings, and no precedence gives
 both. The answer is visibly a rate, so it announces that it was read differently.
-
-## Running it
-
-```bash
-npm install
-npm run dev
-npm test          # 240 unit tests
-npm run e2e       # 6, and they check the one thing only a browser can
-npm run build
-```
-
-React and nothing else at runtime, enforced by `scripts/check-deps.mjs` in CI. The units
-table, the parser and the timezone resolver are hand written, and each of those decisions
-has its argument in the file that implements it.
-
-MIT © James Kim
