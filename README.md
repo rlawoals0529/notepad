@@ -2,6 +2,8 @@
 
 Type maths in prose. Each line is worked out on its own and its answer sits in the margin.
 
+![A document with units, money and dates in it, each line's answer level with it in the right-hand margin](docs/screenshot.png)
+
 ```
 Trip on Saturday
 
