@@ -73,9 +73,19 @@ export function tokenise(line: string): Token[] {
       continue;
     }
 
-    // `**` as a second spelling of `^`, because somebody will type it.
+    /**
+     * `**` as a second spelling of `^`, because somebody will type it.
+     *
+     * The token keeps the text that was written rather than the one it means. Emitting
+     * `"^"` here made the token's text disagree with the two characters at its own offset,
+     * which breaks the one invariant every token has: that it can be found in the line it
+     * came from. A property caught it, once, on an input a generator happened to produce;
+     * the same input is now pinned below the property so it cannot go quiet again.
+     *
+     * The parser is where the two spellings become one, in `isOp`.
+     */
     if (c === "*" && line[i + 1] === "*") {
-      out.push({ kind: "op", text: "^", at: i });
+      out.push({ kind: "op", text: "**", at: i });
       i += 2;
       continue;
     }

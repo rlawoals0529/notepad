@@ -11,7 +11,21 @@ group("the pieces of a line", () => {
 
   test("operators, including the two-character power", () => {
     expect(kinds("2 ^ 3")).toEqual(["number:2", "op:^", "number:3"]);
-    expect(kinds("2 ** 3")).toEqual(["number:2", "op:^", "number:3"]);
+    // The text is what was written, not what it means. Rewriting it to "^" here made the
+    // token disagree with its own offset; the parser is where the two spellings converge.
+    expect(kinds("2 ** 3")).toEqual(["number:2", "op:**", "number:3"]);
+  });
+
+  test("and a token is always findable at its own offset, including that one", () => {
+    // The counterexample that a property found once and that then could not be reproduced:
+    // `fc.string()` happens to generate two adjacent asterisks now and then, and a hunt run
+    // against a different alphabet missed it for 200,000 cases. Pinned so it cannot go quiet
+    // again, because a property that fails one run in fifty reads as flakiness.
+    for (const line of ["2 ** 3", "**", "a**b", "1***2"]) {
+      for (const t of tokenise(line)) {
+        expect(line.slice(t.at, t.at + t.text.length), line).toBe(t.text);
+      }
+    }
   });
 
   test("money is a token of its own, so a tag needs no list of names downstream", () => {
@@ -112,15 +126,22 @@ group("totality", () => {
   });
 
   test("the tokens always cover the line, with nothing invented and nothing lost", () => {
+    // Two generators, because the alphabet decides what this finds. A run against arbitrary
+    // code units missed the `**` case for 200,000 tries; a run over the characters this
+    // language actually uses finds it in a handful.
     // Every token's text sits at its own offset in the original. That is what makes an error
     // able to point at a character, and it catches an off-by-one in any reader above.
-    fc.assert(
-      fc.property(fc.string(), (s) => {
-        for (const t of tokenise(s)) {
-          expect(s.slice(t.at, t.at + t.text.length)).toBe(t.text);
-        }
-      }),
-    );
+    const syntax = fc.stringOf(fc.constantFrom(..."0123456789.,+-*/^()=%$ abcm ".split("")), { maxLength: 24 });
+    for (const generator of [fc.string(), syntax]) {
+      fc.assert(
+        fc.property(generator, (s) => {
+          for (const t of tokenise(s)) {
+            expect(s.slice(t.at, t.at + t.text.length)).toBe(t.text);
+          }
+        }),
+        { numRuns: 2000 },
+      );
+    }
   });
 
   test("tokens come out in order and never overlap", () => {

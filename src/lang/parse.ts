@@ -84,9 +84,17 @@ class Parser {
   private atEnd(): boolean {
     return this.i >= this.tokens.length;
   }
+  /**
+   * Whether the token at the cursor is that operator.
+   *
+   * The one place the two spellings of a power become one. The tokeniser keeps what was
+   * written, so an error can quote it back and so a token can always be found at its own
+   * offset; the grammar does not care which was typed.
+   */
   private isOp(text: string, offset = 0): boolean {
     const t = this.peek(offset);
-    return t?.kind === "op" && t.text === text;
+    if (t?.kind !== "op") return false;
+    return t.text === text || (text === "^" && t.text === "**");
   }
 
   /**

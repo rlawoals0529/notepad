@@ -30,6 +30,7 @@ Run one by making the edit, running `npm test`, and confirming the named test fa
 | `civil.ts`: drop the century rule from `isLeap` | "the rule" |
 | `format.ts`: render an error's value instead of its message | "an error renders as words and never as a figure" |
 | `format.ts`: pad money to one decimal | "money shows no decimals or exactly two, never one" |
+| `tokenise.ts`: make the `**` token carry the text `"^"` | "a token is always findable at its own offset" |
 | `app.css`: `white-space: pre` → `pre-wrap` | e2e "a very long line does not wrap" |
 
 ## The two the properties cannot catch
@@ -44,3 +45,15 @@ conversion is reversible.
 resolver and return the first candidate, and the soundness property still passes: what it
 asserts is that the answer formats back to the requested wall fields, and the earlier of the
 two ambiguous instants does. Only the pinned New York case catches it.
+
+## A property is only as good as its alphabet
+
+The token-coverage property found the `**` bug once, in one run out of roughly fifty, and
+then could not be reproduced. Two hundred thousand targeted runs found nothing, because they
+were generated over arbitrary code units and two adjacent asterisks almost never appear
+there. Run over the characters this language actually uses, the same property finds it in a
+handful of cases.
+
+So the property now runs against both alphabets, and the counterexample is pinned as an
+ordinary test beside it. A property that fails one run in fifty does not read as a bug. It
+reads as flakiness, and flakiness gets muted.
