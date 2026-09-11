@@ -71,7 +71,7 @@ both. The answer is visibly a rate, so it announces that it was read differently
 ```bash
 npm install
 npm run dev
-npm test          # 228 unit tests
+npm test          # 240 unit tests
 npm run e2e       # 6, and they check the one thing only a browser can
 npm run build
 ```
