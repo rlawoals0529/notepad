@@ -3,7 +3,7 @@ import manifest from "../theme/palettes.json";
 import { createThemeStore, grouped, type Theme } from "../lib/theme";
 
 const THEMES = manifest as Theme[];
-const store = createThemeStore(THEMES, "sakura-lake", "notepad:theme");
+const store = createThemeStore(THEMES, "twilight-comet", "notepad:theme");
 
 /**
  * Fifteen palettes, behind a disclosure.

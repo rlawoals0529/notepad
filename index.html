@@ -5,7 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>notepad</title>
     <meta name="description" content="Type maths in prose. Answers appear in the margin." />
-  </head>
+  <script>
+  /* Before first paint, so the page never shows one palette and swaps to another.
+     Every palette block in palettes.css declares its own color-scheme, so setting the attribute
+     is enough; the module later sets it again through the store, which is a no-op when they
+     agree. Wrapped because localStorage throws outright in a private window. */
+  (function () {
+    var t;
+    try { t = localStorage.getItem("notepad:theme"); } catch (e) {}
+    document.documentElement.setAttribute("data-theme", t || "twilight-comet");
+  })();
+</script>
+</head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
