@@ -60,7 +60,7 @@ export async function probeContrast(page: Page): Promise<Probe> {
 
     const rows = await page.evaluate(() => {
       const seen = new Set<string>();
-      const out: { cls: string; text: string; color: string; bg: string; size: number; weight: string }[] = [];
+      const out: { cls: string; text: string; color: string; bg: string; opacity: number; size: number; weight: string }[] = [];
       // Chromium serialises a color-mix() to `color(srgb r g b)`, not to rgb(). Matching only
       // rgb() here treated a mixed background as transparent and walked past it to the wrong
       // ground - and matching only rgb() on the FOREGROUND made the whole check pass on text
@@ -71,6 +71,19 @@ export async function probeContrast(page: Page): Promise<Probe> {
         const srgb = c.match(/color\(\s*srgb\s+([^)]+)\)/);
         if (srgb) return srgb[1]!.split(/[\s/]+/).filter(Boolean).map(Number)[3] ?? 1;
         return null;
+      };
+      /** Every opacity between the element and the ground it is read against, multiplied. */
+      const fadeOf = (el: Element): number => {
+        let n: Element | null = el;
+        let fade = 1;
+        while (n) {
+          fade *= Number(getComputedStyle(n).opacity || 1);
+          const c = getComputedStyle(n).backgroundColor;
+          const a = alphaOf(c);
+          if (n !== el && a !== null && a > 0.99) break;
+          n = n.parentElement;
+        }
+        return fade;
       };
       // The nearest ancestor that actually paints something. A transparent background means
       // the text is sitting on whatever is behind it, not on nothing.
@@ -92,9 +105,26 @@ export async function probeContrast(page: Page): Promise<Probe> {
           .trim();
         if (!text) continue;
         const cs = getComputedStyle(el);
-        if (cs.visibility === "hidden" || cs.display === "none") continue;
+        /*
+         * checkVisibility(), not a display/visibility pair.
+         *
+         * A closed <details> hides its contents with content-visibility rather than with
+         * display, and the pair above says nothing about that - so a button inside one was
+         * measured as if it were on the page. Worse, Chromium does not run style updates in
+         * a content-visibility-hidden subtree, so its computed colour is whatever it was
+         * when the subtree was last rendered: switching palette left the element reporting
+         * the PREVIOUS palette's colour against the current background, and the mismatch
+         * read as a contrast failure that nobody could see or fix.
+         */
+        if (!el.checkVisibility()) continue;
         const r = el.getBoundingClientRect();
         if (r.width < 1 || r.height < 1) continue;
+        /*
+         * WCAG 1.4.3 exempts text that is part of an inactive control, and it has to be
+         * exempted here too: a disabled button is dimmed on purpose, so holding it to 4.5
+         * would mean either failing every page that has one or never dimming one again.
+         */
+        if (el.closest(":disabled, [aria-disabled='true']")) continue;
         // SVG text is painted by `fill`, and reading `color` there measures a colour the
         // glyphs were never drawn in.
         const inSvg = (el as SVGElement).ownerSVGElement != null;
@@ -107,6 +137,10 @@ export async function probeContrast(page: Page): Promise<Probe> {
           text: text.slice(0, 30),
           color,
           bg: bgOf(el),
+          // Opacity on an ancestor fades the text as surely as an alpha in its own colour,
+          // and a computed `color` does not carry it. Without this, a block set to 0.6 is
+          // measured at the contrast it would have had if somebody had not faded it.
+          opacity: fadeOf(el),
           size: parseFloat(cs.fontSize),
           weight: cs.fontWeight,
         });
@@ -128,7 +162,8 @@ export async function probeContrast(page: Page): Promise<Probe> {
       // a notation the parser did not know, and an unreadable colour counted as no finding.
       if (!fg || !bg) throw new Error(`unreadable colour "${row.color}" on "${row.bg}" at ${row.cls}`);
       measured++;
-      const flat = fg[3] < 1 ? blend(fg, bg) : [fg[0], fg[1], fg[2]];
+      const alpha = fg[3] * row.opacity;
+      const flat = alpha < 1 ? blend([fg[0], fg[1], fg[2], alpha], bg) : [fg[0], fg[1], fg[2]];
       const ratio = contrast(flat, [bg[0], bg[1], bg[2]]);
       const large = row.size >= 24 || (row.size >= 18.66 && Number(row.weight) >= 700);
       const need = large ? AA_LARGE : AA_TEXT;

@@ -144,8 +144,11 @@ body {
 .lines {
   text-align: right;
   padding-inline: 0 0.75rem;
+  /* --dim and nothing else. It was --dim at 0.55, which is dimming twice: --dim is already
+     the token for text that is quieter than the page and still readable, corrected to clear
+     4.5:1 and no more, so any fade on top of it lands under. The gutter measured 2.15:1 at
+     that opacity. Quietness comes from the token, not from a second helping of it. */
   color: var(--dim);
-  opacity: 0.55;
   user-select: none;
   overflow: hidden;
   font-variant-numeric: tabular-nums;
