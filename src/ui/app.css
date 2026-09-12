@@ -69,6 +69,25 @@ body {
   font-size: 0.8rem;
 }
 
+/* A word you can click, not a filled button. Resetting the pad is a thing you do rarely and
+   on purpose, and a solid button in the corner of a page whose whole surface is a document
+   would be the loudest thing on it. The target is still 34px tall; only the paint is quiet. */
+.bar .reset {
+  border: 0;
+  background: none;
+  padding: 0.3rem 0;
+  min-height: 34px;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--dim);
+  cursor: pointer;
+  text-underline-offset: 3px;
+  text-decoration: underline 1px solid transparent;
+  transition: color 140ms ease-out, text-decoration-color 140ms ease-out;
+}
+.bar .reset:hover { color: var(--fg); text-decoration-color: var(--edge-strong, var(--edge)); }
+.bar .reset:focus-visible { outline: 2px solid var(--accent-text, var(--accent)); outline-offset: 2px; }
+
 /* --- the sheet ----------------------------------------------------------------------- */
 
 /* --- the pad ------------------------------------------------------------------------------
@@ -102,8 +121,6 @@ body {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  /* Tall enough to keep covering the sheet once it has been pushed up by a long document. */
-  height: 400%;
   background-image: repeating-linear-gradient(
     to bottom,
     transparent 0,
@@ -111,12 +128,24 @@ body {
     color-mix(in srgb, var(--edge) 45%, transparent) calc(var(--rule-pitch) - 1px),
     color-mix(in srgb, var(--edge) 45%, transparent) var(--rule-pitch)
   );
+  /* The sync moves background-position-y, not the element. A repeating gradient has nothing
+     to run out of, so there is no gap to cover and no `height: 400%` to guess at - which was
+     a document four screens long before the rules stopped. */
   background-position: 0 var(--rule-top);
-  will-change: transform;
+  will-change: background-position;
 }
 
 /* The three content layers sit above the ruling. */
 .lines, .editor, .answers { position: relative; z-index: 1; }
+
+/* The part that moves.
+
+   It is inside the column rather than being the column, because `overflow: hidden` clips to
+   an element's own box: translating the column took its clip along, and every row that
+   scrolled into view at the bottom fell outside it and drew nothing. Promoted, so a scroll
+   is a compositor transform rather than a repaint of a column of text - which is what left
+   the old copy on screen for a frame. */
+.lines .track, .answers .track { will-change: transform; }
 
 /* The margin rule. One accent line down the answer column, the way a ledger separates the
    figures from the working. It is 2px because at 1px it reads as another ruling rather than as

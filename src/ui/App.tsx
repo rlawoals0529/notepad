@@ -82,9 +82,50 @@ export function App() {
    */
   const sync = useCallback(() => {
     const top = editor.current?.scrollTop ?? 0;
-    for (const el of [lines.current, answers.current, ruling.current]) {
+    /*
+     * The TRACK inside each column moves, not the column.
+     *
+     * Translating the column moved its clip with it: `overflow: hidden` clips to the
+     * element's own box, so once the box had slid up, every row that scrolled into view at
+     * the bottom was outside it and drew nothing. On a thirty-line document scrolled to the
+     * end the gutter stopped at 18 and the answers beside the last dozen lines were simply
+     * missing. It moved the left border of the answer column off the page too.
+     */
+    for (const el of [lines.current, answers.current]) {
       if (el) el.style.transform = `translateY(${-top}px)`;
     }
+    /*
+     * The ruling travels by moving its paint rather than its box, for the same reason and
+     * one more: it is a repeating gradient, so there is nothing to run out of. Translating
+     * it meant covering the gap with `height: 400%`, which is a document four screens long
+     * before the rules stop.
+     */
+    if (ruling.current) ruling.current.style.backgroundPositionY = `calc(var(--rule-top) - ${top}px)`;
+  }, []);
+
+  /**
+   * Back to the example, and back again.
+   *
+   * A textarea's undo stack does not cover a value set from code, so a plain reset would be
+   * one click between somebody and everything they had typed, with no way back. Holding the
+   * previous document until the next keystroke costs one string and makes the button
+   * recoverable rather than final.
+   */
+  const [undo, setUndo] = useState<string | null>(null);
+  const reset = useCallback(() => {
+    setUndo(text);
+    setText(EXAMPLE);
+  }, [text]);
+  const restore = useCallback(() => {
+    setUndo((previous) => {
+      if (previous !== null) setText(previous);
+      return null;
+    });
+  }, []);
+  const edit = useCallback((next: string) => {
+    // Typing is moving on, and the offer to undo expires with it.
+    setUndo(null);
+    setText(next);
   }, []);
 
   const rows = sheet.rows;
@@ -102,25 +143,32 @@ export function App() {
             {withValues} {withValues === 1 ? "answer" : "answers"}
             {failing > 0 ? `, ${failing} not working` : ""}
           </span>
+          {/* One button, two states. The accessible name changes with the label, so what it
+              will do is what it says either way. */}
+          <button className="reset" onClick={undo === null ? reset : restore}>
+            {undo === null ? "Reset" : "Undo reset"}
+          </button>
         </header>
       )}
 
       <div className="sheet">
         {/* Under the three columns, travelling with them. */}
         <div className="ruling" ref={ruling} aria-hidden="true" />
-        <div className="lines" ref={lines} aria-hidden="true">
-          {rows.map((r) => (
-            <div key={r.line} className={lit.includes(r.line) ? "row-lit" : undefined}>
-              {r.line}
-            </div>
-          ))}
+        <div className="lines" aria-hidden="true">
+          <div className="track" ref={lines}>
+            {rows.map((r) => (
+              <div key={r.line} className={lit.includes(r.line) ? "row-lit" : undefined}>
+                {r.line}
+              </div>
+            ))}
+          </div>
         </div>
 
         <textarea
           ref={editor}
           className="editor"
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => edit(e.target.value)}
           onScroll={sync}
           spellCheck={false}
           autoComplete="off"
@@ -130,7 +178,8 @@ export function App() {
           placeholder="Type a line."
         />
 
-        <div className="answers" ref={answers} aria-live="polite">
+        <div className="answers" aria-live="polite">
+          <div className="track" ref={answers}>
           {rows.map((r) => {
             const window = sheet.windows.get(r.line);
             const said = format(r.value);
@@ -152,6 +201,7 @@ export function App() {
               </div>
             );
           })}
+          </div>
         </div>
       </div>
 
