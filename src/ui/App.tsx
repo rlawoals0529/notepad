@@ -11,6 +11,7 @@ import { run } from "../lang/evaluate";
 import { format } from "../format";
 import { EXAMPLE } from "./example";
 import { announceReady, append, embedded, load, save } from "./session";
+import { Palette } from "./Palette";
 
 const EMBED = embedded();
 
@@ -158,6 +159,7 @@ export function App() {
           <span>Nothing leaves this page.</span>
         </footer>
       )}
+      <Palette />
     </div>
   );
 }
