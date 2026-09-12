@@ -23,6 +23,7 @@ export function App() {
   const editor = useRef<HTMLTextAreaElement>(null);
   const lines = useRef<HTMLDivElement>(null);
   const answers = useRef<HTMLDivElement>(null);
+  const ruling = useRef<HTMLDivElement>(null);
 
   // One evaluation per change, and only when the text actually changed. The whole document
   // is re-run rather than diffed: a line can depend on any line above it, so there is no
@@ -81,7 +82,7 @@ export function App() {
    */
   const sync = useCallback(() => {
     const top = editor.current?.scrollTop ?? 0;
-    for (const el of [lines.current, answers.current]) {
+    for (const el of [lines.current, answers.current, ruling.current]) {
       if (el) el.style.transform = `translateY(${-top}px)`;
     }
   }, []);
@@ -105,6 +106,8 @@ export function App() {
       )}
 
       <div className="sheet">
+        {/* Under the three columns, travelling with them. */}
+        <div className="ruling" ref={ruling} aria-hidden="true" />
         <div className="lines" ref={lines} aria-hidden="true">
           {rows.map((r) => (
             <div key={r.line} className={lit.includes(r.line) ? "row-lit" : undefined}>

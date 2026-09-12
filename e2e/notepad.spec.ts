@@ -74,3 +74,36 @@ test("nothing on the page reaches the network after it has loaded", async ({ pag
   await expect(page.locator(".answer").nth(1)).toHaveText("$7,000");
   expect(requests).toEqual([]);
 });
+
+test("the ruling stays locked to the text, at every palette", async ({ page }) => {
+  await page.goto("/");
+  await page.locator(".editor").fill(
+    Array.from({ length: 60 }, (_, i) => `item ${i + 1} = ${i + 1} * 3`).join("\n"),
+  );
+
+  // The pitch is derived from the type metrics, not written twice. If these ever disagree the
+  // rules sit near the text instead of under it, which is the difference between a ledger and a
+  // striped background.
+  const metrics = await page.evaluate(() => {
+    const ed = getComputedStyle(document.querySelector(".editor")!);
+    const pitch = getComputedStyle(document.querySelector(".ruling")!).backgroundImage;
+    return { lineHeight: parseFloat(ed.lineHeight), hasRuling: pitch.includes("gradient") };
+  });
+  expect(metrics.hasRuling).toBe(true);
+
+  // The ruling is translated with the other columns, not scrolled. The sheet itself never
+  // scrolls, so a background on it would sit still while the text moved over it.
+  await page.locator(".editor").evaluate((e) => {
+    e.scrollTop = 204; // eight exact line pitches
+    e.dispatchEvent(new Event("scroll"));
+  });
+  const moved = await page.evaluate(() => ({
+    ruling: (document.querySelector(".ruling") as HTMLElement).style.transform,
+    lines: (document.querySelector(".lines") as HTMLElement).style.transform,
+    answers: (document.querySelector(".answers") as HTMLElement).style.transform,
+  }));
+  expect(moved.ruling).toBe(moved.lines);
+  expect(moved.ruling).toBe(moved.answers);
+  expect(moved.ruling).toBe("translateY(-204px)");
+  expect(204 % metrics.lineHeight).toBe(0); // still in phase
+});

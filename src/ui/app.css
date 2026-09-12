@@ -14,6 +14,13 @@
   --editor-size: 15px;
   --gutter: 3.5rem;
   --answers: 15rem;
+
+  /* The pitch every ruled line lands on, derived from the type rather than guessed at. This is
+     what lets the rules sit exactly under the text instead of nearly under it, which is the
+     whole difference between paper and a striped background. */
+  --rule-pitch: calc(var(--editor-size) * var(--editor-line));
+  /* The layers all start 1rem down, so the ruling has to as well. */
+  --rule-top: 1rem;
 }
 
 * { box-sizing: border-box; }
@@ -64,12 +71,65 @@ body {
 
 /* --- the sheet ----------------------------------------------------------------------- */
 
+/* --- the pad ------------------------------------------------------------------------------
+   A ledger, not a page with a stripe pattern on it. Two rulings, both derived from the type
+   metrics above so they cannot drift from the text they sit under:
+
+     - horizontal, one per line of the editor, at --rule-pitch
+     - vertical, one down the left of the answer column, which is the money column
+
+   background-attachment: local, so the ruling scrolls with the content. Without it the lines
+   stay put while the text moves over them, which reads as a texture rather than as paper and
+   is immediately wrong the moment anyone scrolls. */
 .sheet {
   position: relative;
   display: grid;
   grid-template-columns: var(--gutter) 1fr var(--answers);
   overflow: hidden;
   min-height: 0;
+
+}
+
+/* The ruling is its own layer, translated with the gutter and the margin rather than painted on
+   the sheet.
+   
+   background-attachment: local was the obvious thing and it is wrong here: the sheet never
+   scrolls, the textarea inside it does, so the rules would have stayed still while the text slid
+   over them. The other two columns solve this by being translated rather than scrolled, and the
+   ruling has to travel the same way for the same reason. */
+.ruling {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  /* Tall enough to keep covering the sheet once it has been pushed up by a long document. */
+  height: 400%;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(var(--rule-pitch) - 1px),
+    color-mix(in srgb, var(--edge) 45%, transparent) calc(var(--rule-pitch) - 1px),
+    color-mix(in srgb, var(--edge) 45%, transparent) var(--rule-pitch)
+  );
+  background-position: 0 var(--rule-top);
+  will-change: transform;
+}
+
+/* The three content layers sit above the ruling. */
+.lines, .editor, .answers { position: relative; z-index: 1; }
+
+/* The margin rule. One accent line down the answer column, the way a ledger separates the
+   figures from the working. It is 2px because at 1px it reads as another ruling rather than as
+   the division between two kinds of thing. */
+.sheet::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: var(--answers);
+  width: 2px;
+  background: color-mix(in srgb, var(--accent) 55%, transparent);
+  pointer-events: none;
 }
 
 /* Every layer that has to line up takes its metrics from here and nowhere else. */
