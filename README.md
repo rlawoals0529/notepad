@@ -21,6 +21,10 @@ leaving + 3 weeks         Sat 3 Oct 2026
 
 Blank lines and sentences produce nothing. Names carry forward. Nothing leaves the page.
 
+## Try it
+
+**[rlawoals0529.github.io/notepad](https://rlawoals0529.github.io/notepad/)** - no install, type into it
+
 ## Running it
 
 ```bash
