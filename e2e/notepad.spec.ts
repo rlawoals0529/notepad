@@ -214,3 +214,14 @@ test("what reset leaves behind is what comes back on reload", async ({ page }) =
   await page.reload();
   expect(await page.locator(".editor").inputValue()).toBe(afterReset);
 });
+
+test("the server under test is this app, not another app on the same port", async ({ page }) => {
+  await page.goto("/");
+  /*
+   * playwright.config.ts reuses a server that is already listening, so a port two projects
+   * share means one project's running preview quietly answers the other's tests. That has
+   * happened here twice, and once it produced a completely green run against the wrong page.
+   * Ports are unique now; this is what catches the next way it goes wrong.
+   */
+  await expect(page).toHaveTitle(/^notepad/);
+});
