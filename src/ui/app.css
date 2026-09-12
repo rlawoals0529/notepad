@@ -201,7 +201,10 @@ body {
 
 /* The window a total covers, shown while the pointer is on it, because an aggregate whose
    inputs are invisible is a number you cannot check. */
-.answer.total { color: var(--accent); cursor: default; }
+/* --accent-text, not --accent: the accent is a fill colour and as words on the page it was
+   under 4.5:1 on nine of the fifteen palettes, as low as 2.11. A total is the one figure
+   this document exists to produce, so it is the last thing that should be hard to read. */
+.answer.total { color: var(--accent-text, var(--accent)); cursor: default; }
 .row-lit { background: color-mix(in oklab, var(--accent) 12%, transparent); }
 
 /* --- the foot ------------------------------------------------------------------------ */
@@ -245,7 +248,12 @@ body {
   background: var(--accent); border: 1px solid var(--edge); flex: none;
 }
 
-.palette-list { margin-top: 0.8rem; display: grid; gap: 0.9rem; }
+/* `display` on a class beats the user agent's `[hidden] { display: none }`, because author
+   styles win over the UA sheet whatever the specificity. So this list was permanently open:
+   the button said aria-expanded="false" over fifteen visible, tabbable options. Guarding the
+   rule is the fix; `[hidden] { display: none !important }` would work too and would hide the
+   next bug of this shape instead of failing on it. */
+.palette-list:not([hidden]) { margin-top: 0.8rem; display: grid; gap: 0.9rem; }
 .palette-list fieldset { border: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .palette-list legend {
   font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
